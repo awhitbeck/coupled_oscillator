@@ -1,9 +1,54 @@
 
-# Test simulator for harmonic dampener research
+# Coupled Oscillator Simulation
 
+## 🚀 Quick Start Guide
 
+### Prerequisites
+```bash
+pip install numpy matplotlib gymnasium
+```
 
+### 1. Run Basic Examples
+```bash
+python test.py
+```
 
+### 2. Interactive Python Usage
+```python
+from simulator import CoupledOscillators
+from pid_controller import PIDController
+
+# Create a simple 3-oscillator system
+sim = CoupledOscillators(N=3, k=1.0, damping=0.02)
+obs, info = sim.reset()
+
+# Apply force and step simulation
+force = 2.0  # Apply 2N force to first oscillator
+obs, reward, term, trunc, info = sim.step(force)
+
+# Plot results after running simulation
+sim.plot_results()
+```
+
+### 3. Configuration-Based Setup
+```python
+# Use JSON configuration files for reproducible experiments
+sim = CoupledOscillators(config_file="experiment_config.json")
+pid = PIDController(config_file="experiment_config.json")
+
+# Run PID-controlled simulation
+obs, info = sim.reset()
+for i in range(1000):
+    control_force = pid.update(reference=0.0, actual=obs[0])
+    obs, reward, term, trunc, info = sim.step(control_force)
+```
+
+### 4. Available Example Configurations
+- **`example_config.json`**: Basic PID control setup
+- **`experiment_config.json`**: Two-oscillator system with fixed end
+- **`chirp_trajectory_config.json`**: Frequency sweep demonstration
+- **`multi_sine_trajectory_config.json`**: Complex multi-frequency patterns
+- **`custom_trajectory_config.json`**: Custom interpolated trajectories
 
 ## Using data as an environment
 
@@ -552,45 +597,3 @@ Guidelines for parameter selection:
 - **Duration**: Should be long enough to observe system settling
 - **Transition times**: Affect smoothness vs. sharpness of response
 
-## Applications
-
-### System Identification
-- Use chirp trajectories to characterize frequency response
-- Apply step inputs to measure settling time and overshoot
-- Use multi-sine for nonlinearity detection
-
-### Control Testing
-- Test PID controller performance with various reference patterns
-- Evaluate tracking accuracy for different trajectory types
-- Assess disturbance rejection using complex end motions
-
-### Physics Education
-- Demonstrate resonance phenomena with frequency sweeps
-- Show superposition effects with multi-sine patterns
-- Visualize energy transfer in coupled systems
-
-## Extending the System
-
-### Adding New Trajectory Types
-1. Create new class inheriting from `TrajectoryGenerator`
-2. Implement `get_position()` and `get_velocity()` methods
-3. Add to factory function in `create_trajectory()`
-4. Update validation in configuration system
-
-### Custom Trajectory Classes
-```python
-class MyCustomTrajectory(TrajectoryGenerator):
-    def __init__(self, config):
-        super().__init__(config)
-        # Initialize parameters from config
-    
-    def get_position(self, time):
-        # Implement position calculation
-        return position
-    
-    def get_velocity(self, time):
-        # Implement velocity calculation  
-        return velocity
-```
-
-The trajectory system provides a powerful and flexible framework for exploring complex dynamics in coupled oscillator systems while maintaining ease of use and physical realism.
