@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import gymnasium as gym
 from gymnasium import spaces
-from typing import Callable, Optional, List, Tuple, Dict, Any
+from typing import Callable, Optional, List, Tuple, Dict, Any, Union
+from pathlib import Path
 
 class CoupledOscillators(gym.Env):
     """
@@ -17,7 +18,9 @@ class CoupledOscillators(gym.Env):
                  damping: float = 0.02, dt: float = 0.01, max_force: float = 5.0,
                  max_episode_steps: int = 1000, target_frequency: float = 1.0,
                  fixed_end_oscillator: bool = False, end_frequency: float = 1.0,
-                 end_amplitude: float = 1.0, end_phase: float = 0.0):
+                 end_amplitude: float = 1.0, end_phase: float = 0.0,
+                 observation_noise_std: float = 0.0, end_trajectory: Optional[Dict[str, Any]] = None,
+                 config_file: Optional[Union[str, Path]] = None):
         """
         Initialize the coupled oscillators system as a Gymnasium environment.
         
@@ -53,8 +56,40 @@ class CoupledOscillators(gym.Env):
             Amplitude of the fixed end oscillator motion
         end_phase : float
             Phase offset of the fixed end oscillator motion (radians)
+        observation_noise_std : float
+            Standard deviation of Gaussian noise added to observations (default: 0.0 = no noise)
+        end_trajectory : dict, optional
+            Trajectory configuration for the last oscillator. If provided, overrides simple sinusoidal motion.
+        config_file : str, Path, or None
+            Path to configuration file (JSON or YAML). If provided, overrides other parameters.
         """
         super().__init__()
+        
+        # Load configuration from file if provided
+        if config_file is not None:
+            try:
+                from .config import ExperimentConfig
+            except ImportError:
+                from config import ExperimentConfig
+            
+            config = ExperimentConfig(config_file)
+            sim_config = config.get_simulation_config()
+            
+            # Override parameters with values from config file
+            N = sim_config.get('N', N)
+            k = sim_config.get('k', k)
+            m = sim_config.get('m', m)
+            damping = sim_config.get('damping', damping)
+            dt = sim_config.get('dt', dt)
+            max_force = sim_config.get('max_force', max_force)
+            max_episode_steps = sim_config.get('max_episode_steps', max_episode_steps)
+            target_frequency = sim_config.get('target_frequency', target_frequency)
+            fixed_end_oscillator = sim_config.get('fixed_end_oscillator', fixed_end_oscillator)
+            end_frequency = sim_config.get('end_frequency', end_frequency)
+            end_amplitude = sim_config.get('end_amplitude', end_amplitude)
+            end_phase = sim_config.get('end_phase', end_phase)
+            observation_noise_std = sim_config.get('observation_noise_std', observation_noise_std)
+            end_trajectory = sim_config.get('end_trajectory', end_trajectory)
         
         self.N = N
         self.damping = damping
@@ -68,6 +103,18 @@ class CoupledOscillators(gym.Env):
         self.end_frequency = end_frequency
         self.end_amplitude = end_amplitude
         self.end_phase = end_phase
+        
+        # Observation noise parameters
+        self.observation_noise_std = observation_noise_std
+        
+        # Trajectory generator for end oscillator
+        self.end_trajectory_generator = None
+        if end_trajectory is not None:
+            try:
+                from .trajectory import create_trajectory
+            except ImportError:
+                from trajectory import create_trajectory
+            self.end_trajectory_generator = create_trajectory(end_trajectory)
         
         # Setup masses
         if m is None:
@@ -165,20 +212,36 @@ class CoupledOscillators(gym.Env):
             self.positions[self.obs_oscillator_idx],  # Observation oscillator position
             self.velocities[self.obs_oscillator_idx]  # Observation oscillator velocity
         ], dtype=np.float32)
+        
+        # Add Gaussian noise to observations if noise standard deviation > 0
+        if self.observation_noise_std > 0:
+            noise = np.random.normal(0, self.observation_noise_std, size=obs.shape).astype(np.float32)
+            obs += noise
+        
         return obs
     
     def _get_fixed_end_position(self, time: float) -> float:
         """Calculate the position of the fixed end oscillator at given time."""
         if not self.fixed_end_oscillator:
             return 0.0
-        return self.end_amplitude * np.sin(2 * np.pi * self.end_frequency * time + self.end_phase)
+        
+        # Use trajectory generator if available, otherwise use simple sinusoidal
+        if self.end_trajectory_generator is not None:
+            return self.end_trajectory_generator.get_position(time)
+        else:
+            return self.end_amplitude * np.sin(2 * np.pi * self.end_frequency * time + self.end_phase)
     
     def _get_fixed_end_velocity(self, time: float) -> float:
         """Calculate the velocity of the fixed end oscillator at given time."""
         if not self.fixed_end_oscillator:
             return 0.0
-        omega = 2 * np.pi * self.end_frequency
-        return self.end_amplitude * omega * np.cos(omega * time + self.end_phase)
+        
+        # Use trajectory generator if available, otherwise use simple sinusoidal
+        if self.end_trajectory_generator is not None:
+            return self.end_trajectory_generator.get_velocity(time)
+        else:
+            omega = 2 * np.pi * self.end_frequency
+            return self.end_amplitude * omega * np.cos(omega * time + self.end_phase)
     
     def _get_info(self) -> Dict[str, Any]:
         """Get info dictionary for Gymnasium interface."""
@@ -409,7 +472,9 @@ class CoupledOscillators(gym.Env):
             'end_frequency': self.end_frequency if self.fixed_end_oscillator else None,
             'end_amplitude': self.end_amplitude if self.fixed_end_oscillator else None,
             'end_phase': self.end_phase if self.fixed_end_oscillator else None,
-            'obs_oscillator_idx': self.obs_oscillator_idx
+            'obs_oscillator_idx': self.obs_oscillator_idx,
+            'observation_noise_std': self.observation_noise_std,
+            'end_trajectory': self.end_trajectory_generator.config if self.end_trajectory_generator else None
         }
     
     def set_coupling(self, i: int, j: int, k_value: float):
@@ -426,6 +491,12 @@ class CoupledOscillators(gym.Env):
             self.masses[i] = mass
         else:
             raise ValueError(f"Oscillator index must be between 0 and {self.N-1}")
+    
+    def set_observation_noise(self, noise_std: float):
+        """Set the standard deviation of observation noise."""
+        if noise_std < 0:
+            raise ValueError("Noise standard deviation must be non-negative")
+        self.observation_noise_std = noise_std
     
     def get_normal_modes(self) -> Tuple[np.ndarray, np.ndarray]:
         """

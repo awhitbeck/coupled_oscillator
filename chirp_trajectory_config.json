@@ -1,0 +1,48 @@
+{
+  "simulation": {
+    "N": 3,
+    "k": 2.0,
+    "m": [1.0, 1.0, 1.0],
+    "damping": 0.02,
+    "dt": 0.01,
+    "max_force": 10.0,
+    "max_episode_steps": 2000,
+    "target_frequency": 1.0,
+    "fixed_end_oscillator": true,
+    "observation_noise_std": 0.005,
+    "end_trajectory": {
+      "type": "chirp",
+      "amplitude": 1.0,
+      "start_frequency": 0.5,
+      "end_frequency": 3.0,
+      "duration": 20.0,
+      "method": "linear",
+      "offset": 0.0
+    }
+  },
+  "pid_controller": {
+    "kp": 15.0,
+    "ki": 3.0,
+    "kd": 1.0,
+    "output_limits": [-15.0, 15.0],
+    "integral_limits": [-3.0, 3.0]
+  },
+  "experiment": {
+    "name": "chirp_trajectory_experiment",
+    "description": "Experiment with frequency sweep (chirp) trajectory for end oscillator",
+    "duration_steps": 2000,
+    "update_factor": 2,
+    "reference_trajectory": {
+      "type": "sinusoidal",
+      "amplitude": 0.5,
+      "frequency": 1.0,
+      "phase": 0.0,
+      "offset": 0.0
+    },
+    "data_collection": {
+      "save_results": true,
+      "output_directory": "./results/chirp_trajectory",
+      "plot_results": true
+    }
+  }
+}

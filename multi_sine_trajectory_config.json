@@ -1,0 +1,65 @@
+{
+  "simulation": {
+    "N": 4,
+    "k": [
+      [0.0, 1.5, 0.0, 0.0],
+      [1.5, 0.0, 2.0, 0.0],
+      [0.0, 2.0, 0.0, 1.0],
+      [0.0, 0.0, 1.0, 0.0]
+    ],
+    "m": [0.8, 1.0, 1.2, 1.0],
+    "damping": 0.03,
+    "dt": 0.005,
+    "max_force": 20.0,
+    "max_episode_steps": 4000,
+    "target_frequency": 1.0,
+    "fixed_end_oscillator": true,
+    "observation_noise_std": 0.01,
+    "end_trajectory": {
+      "type": "multi_sine",
+      "components": [
+        {
+          "amplitude": 0.8,
+          "frequency": 0.5,
+          "phase": 0.0
+        },
+        {
+          "amplitude": 0.3,
+          "frequency": 1.5,
+          "phase": 1.57
+        },
+        {
+          "amplitude": 0.15,
+          "frequency": 3.0,
+          "phase": 0.0
+        }
+      ],
+      "offset": 0.0
+    }
+  },
+  "pid_controller": {
+    "kp": 30.0,
+    "ki": 8.0,
+    "kd": 3.0,
+    "output_limits": [-25.0, 25.0],
+    "integral_limits": [-5.0, 5.0]
+  },
+  "experiment": {
+    "name": "multi_sine_trajectory_experiment",
+    "description": "Experiment with multi-frequency sinusoidal trajectory for end oscillator",
+    "duration_steps": 4000,
+    "update_factor": 3,
+    "reference_trajectory": {
+      "type": "step",
+      "step_time": 5.0,
+      "initial_value": 0.0,
+      "final_value": 0.7,
+      "transition_time": 1.0
+    },
+    "data_collection": {
+      "save_results": true,
+      "output_directory": "./results/multi_sine_trajectory",
+      "plot_results": true
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "simulation": {
+    "N": 3,
+    "k": 1.0,
+    "m": 1.0,
+    "damping": 0.02,
+    "dt": 0.01,
+    "max_force": 5.0,
+    "max_episode_steps": 1000,
+    "target_frequency": 1.0,
+    "fixed_end_oscillator": false,
+    "end_frequency": 1.0,
+    "end_amplitude": 1.0,
+    "end_phase": 0.0,
+    "observation_noise_std": 0.0
+  },
+  "pid_controller": {
+    "kp": 25.0,
+    "ki": 5.0,
+    "kd": 2.0,
+    "output_limits": [-20.0, 20.0],
+    "integral_limits": [-2.0, 2.0]
+  },
+  "experiment": {
+    "name": "example_experiment",
+    "description": "Example coupled oscillator experiment with PID control",
+    "duration_steps": 1000,
+    "update_factor": 5,
+    "reference_trajectory": {
+      "type": "constant",
+      "value": 0.0
+    },
+    "data_collection": {
+      "save_results": true,
+      "output_directory": "./results",
+      "plot_results": true
+    }
+  }
+}

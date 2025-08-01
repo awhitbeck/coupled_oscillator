@@ -1,0 +1,45 @@
+{
+  "simulation": {
+    "N": 3,
+    "k": 1.5,
+    "m": 1.0,
+    "damping": 0.025,
+    "dt": 0.01,
+    "max_force": 15.0,
+    "max_episode_steps": 3000,
+    "target_frequency": 1.0,
+    "fixed_end_oscillator": true,
+    "observation_noise_std": 0.008,
+    "end_trajectory": {
+      "type": "custom",
+      "time_points": [0.0, 2.0, 5.0, 8.0, 12.0, 15.0, 20.0, 25.0, 30.0],
+      "position_points": [0.0, 0.5, 1.2, 0.8, -0.3, -1.0, -0.5, 0.2, 0.0],
+      "extrapolation": "constant"
+    }
+  },
+  "pid_controller": {
+    "kp": 20.0,
+    "ki": 4.0,
+    "kd": 2.5,
+    "output_limits": [-20.0, 20.0],
+    "integral_limits": [-4.0, 4.0]
+  },
+  "experiment": {
+    "name": "custom_trajectory_experiment",
+    "description": "Experiment with custom interpolated trajectory for end oscillator",
+    "duration_steps": 3000,
+    "update_factor": 2,
+    "reference_trajectory": {
+      "type": "ramp",
+      "start_time": 3.0,
+      "end_time": 10.0,
+      "initial_value": 0.0,
+      "final_value": 0.8
+    },
+    "data_collection": {
+      "save_results": true,
+      "output_directory": "./results/custom_trajectory",
+      "plot_results": true
+    }
+  }
+}

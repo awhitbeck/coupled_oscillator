@@ -1,0 +1,53 @@
+{
+  "simulation": {
+    "N": 2,
+    "k": [[0.0, 2.0], [2.0, 0.0]],
+    "m": [0.5, 1.0],
+    "damping": 0.02,
+    "dt": 0.01,
+    "max_force": 12.0,
+    "max_episode_steps": 2500,
+    "target_frequency": 1.0,
+    "fixed_end_oscillator": true,
+    "observation_noise_std": 0.005,
+    "end_trajectory": {
+      "type": "polynomial",
+      "coefficients": [0.0, 0.0, 0.1, -0.02, 0.001],
+      "time_scale": 10.0
+    }
+  },
+  "pid_controller": {
+    "kp": 25.0,
+    "ki": 6.0,
+    "kd": 2.0,
+    "output_limits": [-15.0, 15.0],
+    "integral_limits": [-3.0, 3.0]
+  },
+  "experiment": {
+    "name": "polynomial_trajectory_experiment",
+    "description": "Experiment with polynomial trajectory for end oscillator",
+    "duration_steps": 2500,
+    "update_factor": 1,
+    "reference_trajectory": {
+      "type": "multi_sine",
+      "components": [
+        {
+          "amplitude": 0.4,
+          "frequency": 0.3,
+          "phase": 0.0
+        },
+        {
+          "amplitude": 0.2,
+          "frequency": 1.2,
+          "phase": 1.57
+        }
+      ],
+      "offset": 0.0
+    },
+    "data_collection": {
+      "save_results": true,
+      "output_directory": "./results/polynomial_trajectory",
+      "plot_results": true
+    }
+  }
+}

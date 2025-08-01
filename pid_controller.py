@@ -1,5 +1,6 @@
 import numpy as np
-from typing import Optional, Tuple, Dict
+from typing import Optional, Tuple, Dict, Union
+from pathlib import Path
 
 
 class PIDController:
@@ -10,9 +11,10 @@ class PIDController:
     to a desired reference position using PID feedback control.
     """
     
-    def __init__(self, kp: float, ki: float, kd: float, dt: float, 
+    def __init__(self, kp: float = 1.0, ki: float = 0.0, kd: float = 0.0, dt: float = 0.01, 
                  output_limits: Optional[Tuple[float, float]] = None,
-                 integral_limits: Optional[Tuple[float, float]] = None):
+                 integral_limits: Optional[Tuple[float, float]] = None,
+                 config_file: Optional[Union[str, Path]] = None):
         """
         Initialize PID controller.
         
@@ -30,7 +32,30 @@ class PIDController:
             (min, max) limits for controller output force
         integral_limits : tuple, optional
             (min, max) limits for integral term to prevent windup
+        config_file : str, Path, or None
+            Path to configuration file (JSON or YAML). If provided, overrides other parameters.
         """
+        # Load configuration from file if provided
+        if config_file is not None:
+            try:
+                from .config import ExperimentConfig
+            except ImportError:
+                from config import ExperimentConfig
+            
+            config = ExperimentConfig(config_file)
+            pid_config = config.get_pid_config()
+            
+            # Override parameters with values from config file
+            kp = pid_config.get('kp', kp)
+            ki = pid_config.get('ki', ki)
+            kd = pid_config.get('kd', kd)
+            output_limits = pid_config.get('output_limits', output_limits)
+            integral_limits = pid_config.get('integral_limits', integral_limits)
+            
+            # Get dt from simulation config if not explicitly set in PID config
+            sim_config = config.get_simulation_config()
+            dt = sim_config.get('dt', dt)
+        
         self.kp = kp
         self.ki = ki
         self.kd = kd
